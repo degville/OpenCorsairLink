@@ -1,0 +1,40 @@
+name: opencorsairlink
+summary: a status and control utility that iteracts with CorsairLink products
+description: |
+     OpenCorsairLink is a command-line tool to monitor and control the fan speed,
+     LED colour and pump volumes of specific Corsair power supplies and cooling solutions.  
+     OpenCorsairLink unofficial and is not endorsed or affiliated with Corsair.
+adopt-info: opencorsairlink
+grade: stable
+base: core18
+
+confinement: strict
+
+apps:
+  opencorsairlink:
+    command: bin/opencorsairlink
+    plugs:
+      - raw-usb
+      - uhid
+      - hardware-observe
+
+parts:
+  opencorsairlink:
+    plugin: make
+    source-type: git
+    source: https://github.com/audiohacked/OpenCorsairLink
+    override-pull: |
+      snapcraftctl pull
+      snapcraftctl set-version \
+      "$(git describe --long --tags --always --match=v*.*.* | sed 's/v//')"
+    override-build: |
+      sed -e 's|^LDFLAGS ?= -lm$|LDFLAGS += -lm|' < Makefile > Makefile.tmp && mv Makefile.tmp Makefile
+      make
+      mkdir -p $SNAPCRAFT_PART_INSTALL/bin/
+      mv OpenCorsairLink.elf opencorsairlink
+      mv opencorsairlink $SNAPCRAFT_PART_INSTALL/bin/
+    build-packages:
+      - pkg-config
+      - libusb-1.0-0-dev
+    stage-packages:
+      - libusb-1.0-0
